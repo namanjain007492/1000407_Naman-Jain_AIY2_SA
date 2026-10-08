@@ -123,4 +123,67 @@ with tab2:
     
     timeline_y = [
         player_data['Match3_before_injury_Player_rating'], player_data['Match2_before_injury_Player_rating'], 
-        player
+        player_data['Match1_before_injury_Player_rating'], player_data['Match1_after_injury_Player_rating'], 
+        player_data['Match2_after_injury_Player_rating'], player_data['Match3_after_injury_Player_rating']
+    ]
+    timeline_x = ['Match -3', 'Match -2', 'Match -1', 'Match +1 (Return)', 'Match +2', 'Match +3']
+    
+    fig3 = go.Figure()
+    fig3.add_trace(go.Scatter(x=timeline_x, y=timeline_y, mode='lines+markers+text', name='Rating', 
+                              line=dict(color='#00FF00', width=4), marker=dict(size=10)))
+    fig3.add_vline(x=2.5, line_width=3, line_dash="dash", line_color="#FF0000", annotation_text="INJURY OCCURRED")
+    fig3.update_layout(yaxis_title="Match Rating (out of 10)", template="plotly_dark")
+    st.plotly_chart(fig3, use_container_width=True)
+
+    col_c, col_d = st.columns(2)
+    with col_c:
+        st.subheader("4. Risk Analysis: Age vs Performance Drop")
+        fig4 = px.scatter(filtered_df, x='Age', y='Performance_Drop_Index', color='Injury',
+                          size='Recovery_Days', hover_data=['Name', 'Team Name'], 
+                          title="Bubble Size = Days to Recover")
+        st.plotly_chart(fig4, use_container_width=True)
+        
+    with col_d:
+        st.subheader("5. Leaderboard: Ultimate Comeback Players")
+        comeback_df = filtered_df.dropna(subset=['Rating_Improvement']).sort_values(by='Rating_Improvement', ascending=False)
+        st.dataframe(comeback_df[['Name', 'Team Name', 'Injury', 'Avg_Rating_Before', 'Avg_Rating_After', 'Rating_Improvement']].head(10), use_container_width=True, hide_index=True)
+
+# TAB 3: FIFA ULTIMATE TEAM (Premium UI)
+with tab3:
+    st.subheader("🔍 Interactive FUT Injury Database")
+    card_player = st.selectbox("Select Player to view FUT Status", filtered_df['Name'].dropna().unique(), key="fifa_select")
+    card_data = filtered_df[filtered_df['Name'] == card_player].iloc[0]
+
+    # Advanced CSS Card Design
+    st.markdown(f"""
+    <div style="display: flex; justify-content: center;">
+        <div style="background: linear-gradient(135deg, #1f1c2c 0%, #928DAB 100%); padding: 30px; border-radius: 20px; width: 400px; color: #FFF; box-shadow: 0px 10px 30px rgba(0,0,0,0.5); border: 3px solid #FFD700;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1 style="margin: 0; font-size: 4em; color: #FFD700;">{card_data['FIFA rating']}</h1>
+                <h2 style="margin: 0; font-size: 2em; text-transform: uppercase;">{card_data['Position']}</h2>
+            </div>
+            <h2 style="text-align: center; margin: 20px 0; font-size: 2.2em; text-transform: uppercase; letter-spacing: 2px;">{card_data['Name']}</h2>
+            <hr style="border: 1px solid #FFD700; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; font-size: 1.2em;">
+                <p><strong>Club:</strong><br>{card_data['Team Name']}</p>
+                <p style="text-align: right;"><strong>Age:</strong><br>{card_data['Age']}</p>
+            </div>
+            <div style="background-color: rgba(255,0,0,0.2); padding: 10px; border-radius: 10px; margin-top: 15px; border: 1px solid #FF0000;">
+                <p style="margin: 0; text-align: center; color: #FFA07A;"><strong>⚠️ Last Injury:</strong> {card_data['Injury']}</p>
+                <p style="margin: 5px 0 0 0; text-align: center;"><strong>Time Out:</strong> {card_data['Recovery_Days']} Days</p>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# TAB 4: BUSINESS CONTEXT
+with tab4:
+    st.header("📌 Project Rationale & Research")
+    st.markdown("""
+    **Framing the Analytics Scope (Top 5 Business Questions):**
+    1. **Which specific injuries trigger the most significant drop in team Goal Difference (GD)?** *(Addressed in Tab 1 Bar Chart)*
+    2. **Are there temporal or club-based clusters of frequent injuries that suggest systemic training issues?** *(Addressed in Tab 1 Heatmap)*
+    3. **How is a player's individual form affected immediately post-recovery compared to their pre-injury baseline?** *(Addressed in Tab 2 Timeline)*
+    4. **Does a player's age positively correlate with a longer recovery time and a harsher drop in team performance during their absence?** *(Addressed in Tab 2 Scatter Plot)*
+    5. **Which players demonstrate the strongest psychological and physical resilience by improving their match ratings post-injury?** *(Addressed in Tab 2 Leaderboard)*
+    """)
